@@ -15,7 +15,7 @@ Next.js と OpenAI Responses API を使った、お問い合わせ前さばき�
 - ナレッジベース用の追加資料アップロード
 - ベクトルストアの再構築
 
-![screenshot](./public/screenshot.jpg)
+
 
 ## 主な機能
 

@@ -1,128 +1,153 @@
-# Customer Support Agent with Human in the Loop Demo
+# AIお問い合わせ前さばきデモ
 
 [![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 ![NextJS](https://img.shields.io/badge/Built_with-NextJS-blue)
 ![OpenAI API](https://img.shields.io/badge/Powered_by-OpenAI_API-orange)
 
-This repository contains a NextJS demo app of a Customer Service with a Human in the loop (HITL) use case built on top of the [Responses API](https://platform.openai.com/docs/api-reference/responses).
-It leverages the [file search](https://platform.openai.com/docs/guides/tools-file-search) built-in tool and implements 2 views of a chat interface: one for the customer, and one for the human agent.
+Next.js と OpenAI Responses API を使った、お問い合わせ前さばきエージェントのデモです。  
+ユーザーは `Customer View` で AI と会話し、AI はナレッジベースとツールを使って自己解決を支援します。解決が難しい場合は、適切な問い合わせ先メールアドレスへ案内します。
 
-This demo is an example flow where a human agent would be assisted by an AI agent to answer customer questions, while staying in control of sensitive actions.
+管理者は `Admin` 画面で以下を確認できます。
+
+- 受信したお問い合わせ一覧
+- 問い合わせ詳細と会話ログ
+- 件数、カテゴリ別、ステータス別のダッシュボード
+- ナレッジベース用の追加資料アップロード
+- ベクトルストアの再構築
 
 ![screenshot](./public/screenshot.jpg)
 
-Features:
+## 主な機能
 
-- Multi-turn conversation handling
-- File search tool
-- Vector store creation & file upload for use with the file search
-- Knowledge base display
-- Function calling
-- Streaming suggested responses
-- Suggested actions to execute tool calls
-- Auto-execution of tool calls for non-sensitive actions
+- 顧客向けチャット画面と管理画面の分離
+- OpenAI File Search を使ったナレッジ検索
+- FAQ / Knowledge Base / 管理画面アップロード資料をまとめたベクトル化
+- ユーザー問い合わせのローカル JSON 保存
+- 問い合わせ一覧、詳細、簡易分析ダッシュボード
+- 関数呼び出しによる注文確認、返金、返品などのデモ動作
+- ストリーミング応答
 
-Feel free to customize this demo to suit your specific use case.
+## 画面構成
 
-## How to use
+### `/`
 
-1. **Set up the OpenAI API:**
+トップページです。`/customer` と `/admin` への導線があります。
 
-   - If you're new to the OpenAI API, [sign up for an account](https://platform.openai.com/signup).
-   - Follow the [Quickstart](https://platform.openai.com/docs/quickstart) to retrieve your API key.
+### `/customer`
 
-2. **Clone the Repository:**
+顧客向けのチャット画面です。  
+AI が直接返答し、回答生成中は待機表示が出ます。
 
-   ```bash
-   git clone https://github.com/openai/openai-support-agent-demo.git
-   ```
+### `/admin`
 
-3. **Set the OpenAI API key:**
+管理画面です。以下を表示します。
 
-   2 options:
+- お問い合わせ件数や平均メッセージ数
+- カテゴリ別件数グラフ
+- ステータス別グラフ
+- 日別の流入推移
+- お問い合わせ一覧
+- お問い合わせ詳細と会話ログ
+- ベクトルストア管理パネル
 
-   - Set the `OPENAI_API_KEY` environment variable [globally in your system](https://platform.openai.com/docs/libraries#create-and-export-an-api-key)
-   - Set the `OPENAI_API_KEY` environment variable in the project: Create a `.env` file at the root of the project and add the following line (see `.env.example` for reference):
+### `/init_vs`
 
-   ```bash
-   OPENAI_API_KEY=<your_api_key>
-   ```
+ベクトルストア再構築用の単独ページです。  
+現在は管理画面内のパネルからも同じ処理を実行できます。
 
-4. **Install dependencies:**
+## セットアップ
 
-   Run in the project root:
+1. リポジトリを取得します
 
-   ```bash
-   npm install
-   ```
+```bash
+git clone https://github.com/openai/openai-support-agent-demo.git
+cd openai-support-agent-demo
+```
 
-5. **Run the app:**
+2. OpenAI API キーを設定します
 
-   ```bash
-   npm run dev
-   ```
+`.env` を作成し、以下を設定してください。
 
-   The app will be available at [`http://localhost:3000`](http://localhost:3000).
+```bash
+OPENAI_API_KEY=<your-api-key>
+```
 
-6. **Initialize the vector store:**
+3. 依存関係をインストールします
 
-   Go to [`/init_vs`](http://localhost:3000/init_vs) to create a vector store and initialize it with the knowledge base. Once you have created the vector store, update `config/constants.ts` with your own vector store ID.
+```bash
+npm install
+```
 
-## Demo Flow
+4. 開発サーバーを起動します
 
-To try out the demo, you can ask questions that will trigger a file search.
+```bash
+npm run dev
+```
 
-Example questions:
+5. ベクトルストアを作成または再構築します
 
-- What is the return policy?
-- How do I return a product?
-- How can I cancel an order?
+ブラウザで `http://localhost:3000/admin` を開き、`Vector Store` パネルから以下を実施します。
 
-When an answer is generated, it will be displayed as a suggested response for the customer support representative.
-In the agent view, you can edit the message or send it as is.
+- 必要なら資料をアップロード
+- `Rebuild vector store` を押す
+- 表示された Vector Store ID を `config/constants.ts` の `VECTOR_STORE_ID` に設定
 
-You can also click on the "Relevant articles" to see the corresponding articles in the knowledge base or FAQ.
+## 管理画面での資料アップロード
 
-You can then continue the conversation as the user.
+管理画面では独自資料をアップロードできます。アップロードしたファイルはローカルに保存され、次回のベクトルストア再構築時に組み込まれます。
 
-You can ask for help to trigger actions.
+- 対応例: `.md`, `.txt`, `.pdf`, `.doc`, `.docx`, `.csv`, `.json`
+- 保存先ファイル本体: `data/admin_uploads`
+- メタデータ: `data/admin-documents.json`
 
-Example questions:
+現在の実装は「既存のベクトルストアに追加」ではなく、「毎回新しいベクトルストアを再構築する」方式です。再構築後は新しい ID を `config/constants.ts` に反映してください。
 
-- Help me cancel order ORD1001 => Should suggest the `cancel_order` action
-- Help me reset my password => Should suggest the `reset_password` action
-- Give me a list of my past orders => Should trigger the execution of `get_order_history`
+## 問い合わせデータ
 
-### End-to-end demo flow
+問い合わせログはデモ用にローカル JSON へ保存しています。
 
-1. Ask as the user "How can I cancel my order?"
-2. Confirm the suggested response
-3. Ask as the user "Help me cancel order ORD1001"
-4. Confirm the suggested response
-5. Confirm the suggested action to cancel the order
-6. Confirm the suggested response
+- 問い合わせ API: `app/api/inquiries/route.ts`
+- 保存ロジック: `lib/inquiries-store.ts`
+- 保存先: `data/inquiries.json`
 
-### Limitations
+保存される内容の例:
 
-Note that the functions that are executed are just placeholders and are not actually modifying any data, so the actions will not have any effect. For example, calling `cancel_order` won't change the status of the order.
+- 問い合わせカテゴリ
+- 優先度
+- ステータス
+- 直近のユーザー発話
+- 直近の AI 返答
+- 会話ログ
+- 推奨問い合わせ先メール
 
-## Customization
+## 動作確認用の例
 
-To customize this demo you can:
+`/customer` で以下のような入力を試せます。
 
-- Edit prompts, initial message and model in `config/constants.ts`
-- Edit available functions in `config/tools-list.ts`
-- Edit functions logic in `config/functions.ts`
-- (optional) Edit the demo data in `config/demoData.ts`
+- `返金の方法を教えて`
+- `注文をキャンセルしたい`
+- `パスワードを忘れました`
+- `配送が遅れています`
+- `商品が破損していました`
 
-You can also customize the endpoints in the `/api` folder to call your own backend or external services.
+管理画面では、これらの内容が問い合わせ一覧とグラフに反映されます。
 
-If you want to use this code repository as a starting point for your own project in production, please note that this demo is not production-ready and that you would need to implement safety measures such as input guardrails, user authentication, etc.
+## カスタマイズポイント
 
-## Contributing
+- プロンプトとモデル: `config/constants.ts`
+- 利用可能ツール: `config/tools-list.ts`
+- ツールの実装: `config/functions.ts`
+- デモ用顧客情報・初期データ: `config/demoData.ts`
+- 管理画面 UI: `app/admin/page.tsx`, `components/AdminDashboard.tsx`
+- ベクトルストア管理 UI: `components/VectorStoreManager.tsx`
 
-You are welcome to open issues or submit PRs to improve this app, however, please note that we may not review all suggestions.
+## 制約
 
-## License
+- ツール実行はデモ用のプレースホルダーで、実データは更新しません
+- ベクトルストア ID の更新は手動です
+- 問い合わせ保存先は DB ではなくローカル JSON です
+- 本番利用には認証、監査、ガードレール、権限制御などの追加実装が必要です
 
-This project is licensed under the MIT License. See the LICENSE file for details.
+## ライセンス
+
+MIT License です。詳細は [LICENSE](./LICENSE) を参照してください。

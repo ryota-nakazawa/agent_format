@@ -49,8 +49,9 @@ export default function AdminPage() {
               </h2>
               <p className="mt-3 text-sm leading-6 text-stone-600">
                 Customer conversations are recorded in a local JSON file for this
-                demo. When you update KB markdown files, rebuild the vector store
-                here and keep `VECTOR_STORE_ID` current in `config/constants.ts`.
+                demo. Upload additional materials here, then rebuild the vector
+                store from both built-in KB content and uploaded files. Keep
+                `VECTOR_STORE_ID` current in `config/constants.ts`.
               </p>
             </section>
             <VectorStoreManager />

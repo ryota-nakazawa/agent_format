@@ -1,9 +1,20 @@
 "use client";
 
 import { KB_FOLDERS } from "@/config/demoData";
-import { Copy, Database } from "lucide-react";
+import { Copy, Database, Trash2, Upload } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import type { ChangeEvent } from "react";
+
+interface AdminDocument {
+  id: string;
+  originalName: string;
+  storedName: string;
+  mimeType: string;
+  size: number;
+  createdAt: string;
+  relativePath: string;
+}
 
 interface KBFile {
   type: string;
@@ -19,10 +30,13 @@ export default function VectorStoreManager({
   variant = "panel",
 }: VectorStoreManagerProps) {
   const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [vectorStoreId, setVectorStoreId] = useState<string | null>(null);
   const [status, setStatus] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [documents, setDocuments] = useState<AdminDocument[]>([]);
+  const [builtInFileCount, setBuiltInFileCount] = useState(0);
 
   const isStandalone = variant === "standalone";
 
@@ -30,15 +44,92 @@ export default function VectorStoreManager({
     navigator.clipboard.writeText(text);
   };
 
+  const loadDocuments = async () => {
+    const data = await fetch("/api/admin_documents", {
+      cache: "no-store",
+    }).then((res) => res.json());
+    setDocuments(data.documents ?? []);
+  };
+
+  const loadBuiltInFileCount = async () => {
+    let count = 0;
+
+    for (const folder of KB_FOLDERS) {
+      const folderFiles = await fetch(`/api/list_files?folder=${folder}`).then(
+        (res) => res.json()
+      );
+      count += folderFiles.length;
+    }
+
+    setBuiltInFileCount(count);
+  };
+
+  useEffect(() => {
+    loadDocuments();
+    loadBuiltInFileCount();
+  }, []);
+
+  const handleUploadDocuments = async (
+    event: ChangeEvent<HTMLInputElement>
+  ) => {
+    const files = event.target.files;
+
+    if (!files || files.length === 0) {
+      return;
+    }
+
+    setUploading(true);
+    setError(null);
+
+    try {
+      const formData = new FormData();
+      Array.from(files).forEach((file) => {
+        formData.append("files", file);
+      });
+
+      const response = await fetch("/api/admin_documents", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to upload documents");
+      }
+
+      await loadDocuments();
+      await loadBuiltInFileCount();
+    } catch (uploadError) {
+      console.error(uploadError);
+      setError("Failed to upload documents");
+    } finally {
+      setUploading(false);
+      event.target.value = "";
+    }
+  };
+
+  const handleDeleteDocument = async (id: string) => {
+    setError(null);
+    const response = await fetch(`/api/admin_documents?id=${id}`, {
+      method: "DELETE",
+    });
+
+    if (!response.ok) {
+      setError("Failed to delete document");
+      return;
+    }
+
+    await loadDocuments();
+  };
+
   const handleInitialize = async () => {
     setLoading(true);
     setSuccess(false);
     setError(null);
-    setStatus("Creating vector store...");
+    setStatus("Creating a fresh vector store...");
 
     const response = await fetch("/api/vector_stores/create_store", {
       method: "POST",
-      body: JSON.stringify({ name: "CS Knowledge Base" }),
+      body: JSON.stringify({ name: "CS Knowledge Base Rebuild" }),
     });
 
     if (response.status !== 200) {
@@ -62,10 +153,18 @@ export default function VectorStoreManager({
         ...folderFiles.map((file: string) => ({
           type: folder,
           filename: file.split(".")[0],
-          filepath: `/public/${folder}/${file}`,
+          filepath: `public/${folder}/${file}`,
         }))
       );
     }
+
+    filesList.push(
+      ...documents.map((file) => ({
+        type: "uploaded_document",
+        filename: file.originalName.replace(/\.[^/.]+$/, ""),
+        filepath: file.relativePath,
+      }))
+    );
 
     setStatus(`Uploading ${filesList.length} files to vector store...`);
 
@@ -127,8 +226,8 @@ export default function VectorStoreManager({
             Knowledge Base Index
           </h2>
           <p className="text-sm leading-6 text-stone-600">
-            Upload content from `public/knowledge_base` and `public/faq` into
-            an OpenAI vector store for File Search.
+            Upload internal materials here, then rebuild the vector store from
+            both the built-in KB and your uploaded documents.
           </p>
         </div>
         {!isStandalone ? (
@@ -142,11 +241,73 @@ export default function VectorStoreManager({
       </div>
 
       <div className="space-y-3 text-sm text-stone-600">
-        <p>Use this after updating your FAQ or knowledge base markdown files.</p>
         <p>
-          After creation, copy the ID and set it in `config/constants.ts` as
+          Built-in sources: {builtInFileCount} files from
+          `public/knowledge_base` and `public/faq`.
+        </p>
+        <p>Uploaded sources: {documents.length} files stored in this admin UI.</p>
+        <p>
+          After rebuilding, copy the new ID and set it in `config/constants.ts`
+          as
           `VECTOR_STORE_ID`.
         </p>
+      </div>
+
+      <div className="rounded-2xl border border-stone-200 bg-stone-50 p-4">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <div className="text-sm font-medium text-stone-900">
+              Uploaded documents
+            </div>
+            <div className="text-xs text-stone-500">
+              Add markdown, text, PDF, or office docs for the next rebuild.
+            </div>
+          </div>
+          <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-stone-300 bg-white px-3 py-2 text-sm font-medium text-stone-700 transition-colors hover:bg-stone-100">
+            <Upload className="h-4 w-4" />
+            {uploading ? "Uploading..." : "Upload files"}
+            <input
+              type="file"
+              multiple
+              className="hidden"
+              onChange={handleUploadDocuments}
+              accept=".md,.txt,.pdf,.doc,.docx,.csv,.json"
+            />
+          </label>
+        </div>
+
+        <div className="mt-4 space-y-2">
+          {documents.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-stone-300 px-4 py-6 text-sm text-stone-500">
+              No uploaded documents yet.
+            </div>
+          ) : (
+            documents.map((document) => (
+              <div
+                key={document.id}
+                className="flex items-center justify-between gap-3 rounded-xl bg-white px-3 py-3 text-sm shadow-sm"
+              >
+                <div className="min-w-0">
+                  <div className="truncate font-medium text-stone-900">
+                    {document.originalName}
+                  </div>
+                  <div className="text-xs text-stone-500">
+                    {new Date(document.createdAt).toLocaleString("ja-JP")} ・{" "}
+                    {Math.max(1, Math.round(document.size / 1024))} KB
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleDeleteDocument(document.id)}
+                  className="rounded-full p-2 text-stone-400 transition-colors hover:bg-stone-100 hover:text-stone-700"
+                  aria-label={`Delete ${document.originalName}`}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
+            ))
+          )}
+        </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
@@ -156,7 +317,7 @@ export default function VectorStoreManager({
           onClick={handleInitialize}
           className="rounded-full bg-stone-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-stone-700 disabled:cursor-not-allowed disabled:bg-stone-300"
         >
-          {loading ? "Indexing..." : "Initialize vector store"}
+          {loading ? "Rebuilding..." : "Rebuild vector store"}
         </button>
         <div className="text-sm text-stone-500">{status}</div>
       </div>
@@ -166,7 +327,7 @@ export default function VectorStoreManager({
       {success && !error ? (
         <div className="rounded-2xl bg-stone-50 p-4 text-sm text-stone-700">
           <div className="font-medium text-stone-900">
-            Knowledge base updated successfully.
+            Vector store rebuilt successfully.
           </div>
           <div className="mt-3 flex items-center gap-2">
             <div className="text-stone-500">Vector Store ID:</div>

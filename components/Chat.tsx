@@ -30,6 +30,35 @@ function TypingIndicatorDot({
 
 function TypingIndicator({ sender }: { sender: "user" | "agent" }) {
   const color = sender === "user" ? "bg-zinc-900" : "bg-white";
+
+  if (sender === "agent") {
+    return (
+      <div className="mb-5 flex justify-start">
+        <div className="mr-4 max-w-[280px] rounded-[20px] rounded-bl-[6px] border border-stone-200 bg-[linear-gradient(135deg,#fffdf9_0%,#f3ece2_100%)] px-4 py-3 shadow-sm md:mr-24">
+          <div className="flex items-center gap-2">
+            <span className="relative flex h-2.5 w-2.5">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#c07b47] opacity-30" />
+              <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-[#c07b47]" />
+            </span>
+            <div className="text-sm font-medium tracking-[0.02em] text-stone-700">
+              回答を生成中です
+            </div>
+          </div>
+          <div className="mt-3 flex items-center gap-2">
+            <div className="h-2 flex-1 rounded-full bg-stone-200/80">
+              <div className="h-2 w-2/3 animate-pulse rounded-full bg-[linear-gradient(90deg,#c07b47_0%,#e8c7a8_100%)]" />
+            </div>
+            <div className="flex gap-1">
+              <TypingIndicatorDot delay="0s" color="bg-stone-500" />
+              <TypingIndicatorDot delay="0.15s" color="bg-stone-500" />
+              <TypingIndicatorDot delay="0.3s" color="bg-stone-500" />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       className={`flex mb-5 ${

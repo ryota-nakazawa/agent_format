@@ -1,13 +1,17 @@
 import { MODEL } from "@/config/constants";
+import { buildTools } from "@/lib/tool-definitions";
+import { getActiveVectorStoreId } from "@/lib/vector-store-config";
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
 
 export async function POST(request: Request) {
   try {
-    const { messages, tools } = await request.json();
+    const { messages } = await request.json();
     console.log("Received messages:", messages);
 
     const openai = new OpenAI();
+    const activeVectorStoreId = await getActiveVectorStoreId();
+    const tools = buildTools(activeVectorStoreId);
 
     const events = await openai.responses.create({
       model: MODEL,

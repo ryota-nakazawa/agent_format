@@ -1,6 +1,9 @@
 import { AGENT_NAME } from "./demoData";
 
 export const MODEL = "gpt-5.2";
+export const KB_RELEVANCE_THRESHOLD = 0.5;
+export const KB_FALLBACK_MESSAGE =
+  "この件は現在の案内資料では確認できないため、support@example.com へ連絡してください。";
 
 // Developer prompt for the assistant
 export const DEVELOPER_PROMPT = `
@@ -24,6 +27,7 @@ Tool guidance:
 - If no order ID is provided, fetch order history with get_order_history, then ask the customer which order to view; do not call get_order until they specify one.
 - Call one tool at a time; wait for the tool result before calling another.
 - Only confirm an action as done when a tool result actually shows it completed.
+- If you cannot ground your answer in the knowledge base or a tool result, do not answer from general knowledge. Instead, route the customer to the appropriate contact email.
 
 Escalation routing:
 - Billing, payments, vouchers, or refunds -> billing@example.com
@@ -41,4 +45,4 @@ Hi, I'm ${AGENT_NAME}, your AI support assistant. How can I help you today?
 
 // Replace with the vector store ID you get after initializing the vector store
 // Go to /init_vs to initialize the vector store with the demo knowledge base
-export const VECTOR_STORE_ID = "vs_69b2aac99638819191a190f044b99089";
+export const VECTOR_STORE_ID = "vs_69b2d758ac5881919431c6512f915708";

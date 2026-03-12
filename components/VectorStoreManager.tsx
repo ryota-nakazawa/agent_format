@@ -32,6 +32,9 @@ export default function VectorStoreManager({
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [vectorStoreId, setVectorStoreId] = useState<string | null>(null);
+  const [activeVectorStoreId, setActiveVectorStoreId] = useState<string | null>(
+    null
+  );
   const [status, setStatus] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -51,6 +54,13 @@ export default function VectorStoreManager({
     setDocuments(data.documents ?? []);
   };
 
+  const loadActiveVectorStoreId = async () => {
+    const data = await fetch("/api/vector_stores/active", {
+      cache: "no-store",
+    }).then((res) => res.json());
+    setActiveVectorStoreId(data.activeVectorStoreId ?? null);
+  };
+
   const loadBuiltInFileCount = async () => {
     let count = 0;
 
@@ -67,6 +77,7 @@ export default function VectorStoreManager({
   useEffect(() => {
     loadDocuments();
     loadBuiltInFileCount();
+    loadActiveVectorStoreId();
   }, []);
 
   const handleUploadDocuments = async (
@@ -204,6 +215,22 @@ export default function VectorStoreManager({
     }
 
     setStatus("Uploaded all files to vector store.");
+    const activateResponse = await fetch("/api/vector_stores/active", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ vectorStoreId: vs.id }),
+    });
+
+    if (!activateResponse.ok) {
+      setError("Vector store was created, but failed to activate it");
+      setLoading(false);
+      return;
+    }
+
+    setActiveVectorStoreId(vs.id);
+    setStatus("Uploaded all files and activated the vector store.");
     setSuccess(true);
     setLoading(false);
   };
@@ -247,10 +274,16 @@ export default function VectorStoreManager({
         </p>
         <p>Uploaded sources: {documents.length} files stored in this admin UI.</p>
         <p>
-          After rebuilding, copy the new ID and set it in `config/constants.ts`
-          as
-          `VECTOR_STORE_ID`.
+          Rebuild successful stores are activated automatically. `config/constants.ts`
+          now only acts as a fallback value.
         </p>
+      </div>
+
+      <div className="rounded-2xl border border-stone-200 bg-white px-4 py-3 text-sm text-stone-600">
+        <span className="font-medium text-stone-900">Active vector store:</span>{" "}
+        <span className="font-mono text-xs">
+          {activeVectorStoreId ?? "Not configured"}
+        </span>
       </div>
 
       <div className="rounded-2xl border border-stone-200 bg-stone-50 p-4">
@@ -342,6 +375,9 @@ export default function VectorStoreManager({
             >
               <Copy size={16} />
             </button>
+          </div>
+          <div className="mt-2 text-xs text-stone-500">
+            This store is already active. No manual config edit is required.
           </div>
         </div>
       ) : null}

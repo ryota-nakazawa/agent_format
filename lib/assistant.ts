@@ -1,8 +1,11 @@
-import { DEVELOPER_PROMPT } from "@/config/constants";
+import {
+  DEVELOPER_PROMPT,
+  KB_FALLBACK_MESSAGE,
+  KB_RELEVANCE_THRESHOLD,
+} from "@/config/constants";
 import { parse } from "partial-json";
 import { handleTool } from "@/lib/tools/tools-handling";
 import useConversationStore from "@/stores/useConversationStore";
-import { tools } from "@/lib/tools/tools";
 import { Annotation } from "@/components/Annotations";
 import { functionsMap } from "@/config/functions";
 import useDataStore from "@/stores/useDataStore";
@@ -57,7 +60,6 @@ export const handleTurn = async (
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         messages: messages,
-        tools: tools,
       }),
     });
 
@@ -134,10 +136,16 @@ export const processMessages = async () => {
   ];
 
   let assistantMessageContent = "";
+  let assistantMessageId = "";
   let functionArguments = "";
+  let turnHasRelevantKnowledge = false;
+  let turnExecutedFunctionCall = false;
+  let forceFallbackMessage = false;
 
   setSuggestedMessage(null);
   setSuggestedMessageDone(false);
+  setRelevantArticlesLoading(false);
+  setFAQExtracts([]);
 
   await handleTurn(allConversationItems, async ({ event, data }) => {
     switch (event) {
@@ -145,6 +153,7 @@ export const processMessages = async () => {
       case "response.output_text.annotation.added": {
         const { delta, item_id, annotation } = data;
         setAgentTyping(true);
+        assistantMessageId = item_id;
 
         let partial = "";
         if (typeof delta === "string") {
@@ -187,6 +196,26 @@ export const processMessages = async () => {
       }
 
       case "response.output_text.done": {
+        forceFallbackMessage =
+          !turnHasRelevantKnowledge && !turnExecutedFunctionCall;
+
+        if (forceFallbackMessage && assistantMessageId) {
+          assistantMessageContent = KB_FALLBACK_MESSAGE;
+          const fallbackMessage = chatMessages.find(
+            (item) => item.type === "message" && item.id === assistantMessageId
+          );
+
+          if (fallbackMessage && fallbackMessage.type === "message") {
+            fallbackMessage.content = [
+              {
+                type: "output_text",
+                text: KB_FALLBACK_MESSAGE,
+              },
+            ];
+            setChatMessages([...chatMessages]);
+          }
+        }
+
         if (assistantMessageContent.trim() && activeInquiryId) {
           await fetch("/api/inquiries", {
             method: "POST",
@@ -216,6 +245,7 @@ export const processMessages = async () => {
         // Handle differently depending on the item type
         switch (item.type) {
           case "function_call": {
+            turnExecutedFunctionCall = true;
             functionArguments += item.arguments || "";
             chatMessages.push({
               type: "tool_call",
@@ -335,8 +365,28 @@ export const processMessages = async () => {
         // After output item is done, adding tool call ID
         const { item } = data || {};
 
+        if (item.type === "file_search_call") {
+          turnHasRelevantKnowledge = (item.results ?? []).some(
+            (result: { score?: number }) =>
+              (result.score ?? 0) >= KB_RELEVANCE_THRESHOLD
+          );
+        }
+
+        const normalizedItem =
+          item.type === "message" && forceFallbackMessage
+            ? {
+                ...item,
+                content: [
+                  {
+                    type: "output_text",
+                    text: KB_FALLBACK_MESSAGE,
+                  },
+                ],
+              }
+            : item;
+
         conversationItems.push({
-          ...item,
+          ...normalizedItem,
           results: undefined,
         });
 
@@ -385,7 +435,7 @@ export const processMessages = async () => {
           setRelevantArticlesLoading(false);
         }
 
-        if (item.type === "message") {
+        if (normalizedItem.type === "message") {
           setAgentTyping(false);
         }
 

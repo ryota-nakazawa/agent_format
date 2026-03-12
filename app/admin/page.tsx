@@ -50,8 +50,8 @@ export default function AdminPage() {
               <p className="mt-3 text-sm leading-6 text-stone-600">
                 Customer conversations are recorded in a local JSON file for this
                 demo. Upload additional materials here, then rebuild the vector
-                store from both built-in KB content and uploaded files. Keep
-                `VECTOR_STORE_ID` current in `config/constants.ts`.
+                store from both built-in KB content and uploaded files. The
+                rebuilt store is activated automatically.
               </p>
             </section>
             <VectorStoreManager />

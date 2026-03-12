@@ -90,7 +90,11 @@ npm run dev
 
 - 必要なら資料をアップロード
 - `Rebuild vector store` を押す
-- 表示された Vector Store ID を `config/constants.ts` の `VECTOR_STORE_ID` に設定
+
+再構築に成功した Vector Store は自動で active 設定されます。  
+そのため、通常運用では `config/constants.ts` を毎回書き換える必要はありません。
+
+`config/constants.ts` の `VECTOR_STORE_ID` は、初回起動時や設定ファイル未生成時のフォールバック値として扱われます。
 
 ## 管理画面での資料アップロード
 
@@ -100,7 +104,7 @@ npm run dev
 - 保存先ファイル本体: `data/admin_uploads`
 - メタデータ: `data/admin-documents.json`
 
-現在の実装は「既存のベクトルストアに追加」ではなく、「毎回新しいベクトルストアを再構築する」方式です。再構築後は新しい ID を `config/constants.ts` に反映してください。
+現在の実装は「既存のベクトルストアに追加」ではなく、「毎回新しいベクトルストアを再構築し、その新しい ID を自動で active に切り替える」方式です。
 
 ## 問い合わせデータ
 

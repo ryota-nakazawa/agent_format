@@ -13,6 +13,7 @@ interface ConversationState {
   chatMessages: Item[];
   // Items sent to the Responses API
   conversationItems: any[];
+  activeInquiryId: string | null;
 
   annotations: any[];
 
@@ -32,6 +33,7 @@ interface ConversationState {
 
   setChatMessages: (items: Item[]) => void;
   setConversationItems: (messages: any[]) => void;
+  setActiveInquiryId: (inquiryId: string | null) => void;
   addChatMessage: (item: Item) => void;
   addConversationItem: (message: ChatCompletionMessageParam) => void;
   setRecommendedActions: (actions: Action[]) => void;
@@ -50,6 +52,7 @@ const useConversationStore = create<ConversationState>((set) => ({
     },
   ],
   conversationItems: [],
+  activeInquiryId: null,
   annotations: [],
   recommendedActions: [],
   suggestedMessage: null,
@@ -62,6 +65,7 @@ const useConversationStore = create<ConversationState>((set) => ({
   setComposerText: (text) => set({ composerText: text }),
   setChatMessages: (items) => set({ chatMessages: items }),
   setConversationItems: (messages) => set({ conversationItems: messages }),
+  setActiveInquiryId: (inquiryId) => set({ activeInquiryId: inquiryId }),
   addChatMessage: (item) =>
     set((state) => ({ chatMessages: [...state.chatMessages, item] })),
   addConversationItem: (message) =>

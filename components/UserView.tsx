@@ -3,9 +3,16 @@ import React from "react";
 import Chat from "./Chat";
 import useConversationStore from "@/stores/useConversationStore";
 import { Item, processMessages } from "@/lib/assistant";
+import { CUSTOMER_DETAILS } from "@/config/demoData";
 
 export default function UserView() {
-  const { chatMessages, addConversationItem, addChatMessage } =
+  const {
+    chatMessages,
+    addConversationItem,
+    addChatMessage,
+    activeInquiryId,
+    setActiveInquiryId,
+  } =
     useConversationStore();
 
   const handleSendMessage = async (message: string) => {
@@ -24,6 +31,23 @@ export default function UserView() {
     try {
       addConversationItem(userMessage);
       addChatMessage(userItem);
+      const inquiryResponse = await fetch("/api/inquiries", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          inquiryId: activeInquiryId,
+          customerId: CUSTOMER_DETAILS.id,
+          customerName: CUSTOMER_DETAILS.name,
+          userMessage: message.trim(),
+        }),
+      }).then((res) => res.json());
+
+      if (inquiryResponse?.id) {
+        setActiveInquiryId(inquiryResponse.id);
+      }
+
       await processMessages();
     } catch (error) {
       console.error("Error processing message:", error);

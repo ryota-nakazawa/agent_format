@@ -1,5 +1,5 @@
 import Link from "next/link";
-import AgentView from "@/components/AgentView";
+import AdminDashboard from "@/components/AdminDashboard";
 import VectorStoreManager from "@/components/VectorStoreManager";
 
 export default function AdminPage() {
@@ -13,10 +13,10 @@ export default function AdminPage() {
                 Admin Console
               </div>
               <h1 className="text-2xl font-semibold">
-                Support Representative Dashboard
+                Inquiry Management Dashboard
               </h1>
               <p className="mt-2 max-w-2xl text-sm leading-6 text-stone-300">
-                Review the conversation, approve sensitive actions, and refresh
+                Track incoming inquiries, review message history, and refresh
                 the knowledge base index from one place.
               </p>
             </div>
@@ -37,18 +37,9 @@ export default function AdminPage() {
           </div>
         </header>
 
-        <div className="grid flex-1 min-h-0 gap-4 xl:grid-cols-[minmax(0,1.8fr)_380px]">
-          <div className="min-h-0 overflow-hidden rounded-[28px] border border-stone-200 bg-white/85 p-2 shadow-sm backdrop-blur">
-            <div className="px-4 pt-4 text-xs font-semibold uppercase tracking-[0.2em] text-stone-500">
-              Support Representative View
-            </div>
-            <div className="h-[calc(100%-2rem)]">
-              <AgentView />
-            </div>
-          </div>
-
-          <aside className="flex min-h-0 flex-col gap-4">
-            <VectorStoreManager />
+        <div className="flex flex-1 min-h-0 flex-col gap-4">
+          <AdminDashboard />
+          <div className="grid gap-4 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,420px)]">
             <section className="rounded-3xl border border-stone-200 bg-white p-6 shadow-sm">
               <div className="text-xs font-semibold uppercase tracking-[0.2em] text-stone-500">
                 Operations
@@ -57,12 +48,13 @@ export default function AdminPage() {
                 Admin Notes
               </h2>
               <p className="mt-3 text-sm leading-6 text-stone-600">
-                The customer now receives AI responses directly. Use the vector
-                store initializer after changing KB content, then update
-                `VECTOR_STORE_ID` in `config/constants.ts`.
+                Customer conversations are recorded in a local JSON file for this
+                demo. When you update KB markdown files, rebuild the vector store
+                here and keep `VECTOR_STORE_ID` current in `config/constants.ts`.
               </p>
             </section>
-          </aside>
+            <VectorStoreManager />
+          </div>
         </div>
       </div>
     </div>

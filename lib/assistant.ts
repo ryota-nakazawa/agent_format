@@ -7,6 +7,7 @@ import { Annotation } from "@/components/Annotations";
 import { functionsMap } from "@/config/functions";
 import useDataStore from "@/stores/useDataStore";
 import { agentTools } from "@/config/tools-list";
+import { CUSTOMER_DETAILS } from "@/config/demoData";
 
 export interface ContentItem {
   type: "input_text" | "output_text" | "refusal" | "output_audio";
@@ -111,6 +112,7 @@ export const processMessages = async () => {
     chatMessages,
     conversationItems,
     recommendedActions,
+    activeInquiryId,
     setChatMessages,
     setConversationItems,
     setRecommendedActions,
@@ -185,6 +187,20 @@ export const processMessages = async () => {
       }
 
       case "response.output_text.done": {
+        if (assistantMessageContent.trim() && activeInquiryId) {
+          await fetch("/api/inquiries", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              inquiryId: activeInquiryId,
+              customerId: CUSTOMER_DETAILS.id,
+              customerName: CUSTOMER_DETAILS.name,
+              assistantMessage: assistantMessageContent.trim(),
+            }),
+          });
+        }
         setSuggestedMessageDone(true);
         setAgentTyping(false);
         break;
@@ -336,6 +352,22 @@ export const processMessages = async () => {
             // Record tool output
             toolCallMessage.output = JSON.stringify(toolResult);
             setChatMessages([...chatMessages]);
+            if (activeInquiryId) {
+              await fetch("/api/inquiries", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  inquiryId: activeInquiryId,
+                  customerId: CUSTOMER_DETAILS.id,
+                  customerName: CUSTOMER_DETAILS.name,
+                  toolMessage: `${toolCallMessage.name}: ${JSON.stringify(
+                    toolResult
+                  )}`,
+                }),
+              });
+            }
             conversationItems.push({
               type: "function_call_output",
               call_id: toolCallMessage.call_id,

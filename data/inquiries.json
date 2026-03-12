@@ -1,0 +1,38 @@
+[
+  {
+    "id": "inq_mmnko1d7",
+    "customerId": "cus_28X44",
+    "customerName": "Janet Deer",
+    "category": "billing",
+    "priority": "medium",
+    "status": "open",
+    "summary": "返金がしたいです",
+    "recommendedContactEmail": "billing@example.com",
+    "routeReason": "billing, payments, refunds, and voucher requests",
+    "createdAt": "2026-03-12T14:37:37.386Z",
+    "updatedAt": "2026-03-12T14:37:42.510Z",
+    "lastUserMessage": "返金がしたいです",
+    "lastAssistantMessage": "返金ですね。まず、どの注文の返金をご希望か確認したいです。ご注文履歴に **ORD1001〜ORD1007** がありましたが、どの **注文ID（例：ORD1003）** を返金しますか？  \nあわせて、可能なら「返金理由（例：誤注文／不良品／未着など）」も教えてください。",
+    "messageCount": 3,
+    "messages": [
+      {
+        "id": "user-1773326257387-e5653d",
+        "role": "user",
+        "text": "返金がしたいです",
+        "createdAt": "2026-03-12T14:37:37.387Z"
+      },
+      {
+        "id": "tool-1773326259423-67ce70",
+        "role": "tool",
+        "text": "get_order_history: [\"ORD1001\",\"ORD1002\",\"ORD1003\",\"ORD1004\",\"ORD1005\",\"ORD1006\",\"ORD1007\"]",
+        "createdAt": "2026-03-12T14:37:39.423Z"
+      },
+      {
+        "id": "assistant-1773326262510-b9a66a",
+        "role": "assistant",
+        "text": "返金ですね。まず、どの注文の返金をご希望か確認したいです。ご注文履歴に **ORD1001〜ORD1007** がありましたが、どの **注文ID（例：ORD1003）** を返金しますか？  \nあわせて、可能なら「返金理由（例：誤注文／不良品／未着など）」も教えてください。",
+        "createdAt": "2026-03-12T14:37:42.510Z"
+      }
+    ]
+  }
+]

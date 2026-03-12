@@ -4,9 +4,8 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import ToolCall from "./ToolCall";
 import Message from "./Message";
 import Annotations from "./Annotations";
-import type { Item, ChatMessage } from "@/lib/assistant";
+import type { Item } from "@/lib/assistant";
 import useConversationStore from "@/stores/useConversationStore";
-import { SendIcon, PencilIcon } from "lucide-react";
 
 interface ChatProps {
   items: Item[];
@@ -63,22 +62,12 @@ export default function Chat({ items, view, onSendMessage }: ChatProps) {
   const setAgentTyping = useConversationStore((s) => s.setAgentTyping);
   const userTyping = useConversationStore((s) => s.userTyping);
   const agentTyping = useConversationStore((s) => s.agentTyping);
-
-  const suggestedMessage = useConversationStore(
-    (s) => s.suggestedMessage
-  ) as ChatMessage | null;
-  const setSuggestedMessage = useConversationStore(
-    (s) => s.setSuggestedMessage
-  );
-  const suggestedMessageDone = useConversationStore(
-    (s) => s.suggestedMessageDone
-  );
   const composerText = useConversationStore((s) => s.composerText);
   const setComposerText = useConversationStore((s) => s.setComposerText);
 
   useEffect(() => {
     itemsEndRef.current?.scrollIntoView({ behavior: "instant" });
-  }, [items, suggestedMessage]);
+  }, [items]);
 
   useEffect(() => {
     const typing =
@@ -123,22 +112,6 @@ export default function Chat({ items, view, onSendMessage }: ChatProps) {
     [handleSendMessage, isComposing]
   );
 
-  const handleSendNow = useCallback(() => {
-    if (!suggestedMessage) return;
-    const text = suggestedMessage.content[0]?.text ?? "";
-    onSendMessage(text);
-    setSuggestedMessage(null);
-    setAgentTyping(false);
-  }, [suggestedMessage, onSendMessage, setSuggestedMessage, setAgentTyping]);
-
-  const handleEdit = useCallback(() => {
-    if (!suggestedMessage) return;
-    const text = suggestedMessage.content[0]?.text ?? "";
-    setComposerText(text);
-    setSuggestedMessage(null);
-    setAgentTyping(false);
-  }, [suggestedMessage, setComposerText, setSuggestedMessage, setAgentTyping]);
-
   return (
     <div className="flex flex-col h-full max-w-[750px] mx-auto">
       {/* Messages */}
@@ -159,36 +132,6 @@ export default function Chat({ items, view, onSendMessage }: ChatProps) {
             ) : null}
           </React.Fragment>
         ))}
-
-        {/* Suggested message + actions */}
-        {view === "agent" && suggestedMessage && (
-          <div className="flex flex-col gap-1 mb-5">
-            <Message message={suggestedMessage} view={view} suggestion={true} />
-
-            {suggestedMessageDone ? (
-              <div className="flex justify-end text-xs mt-2">
-                <div className="flex flex-col gap-1">
-                  <div className="mt-2 flex gap-2">
-                    <div
-                      onClick={handleSendNow}
-                      className="cursor-pointer flex items-center gap-1 px-3 py-1 font-medium rounded-md bg-black text-white hover:bg-zinc-800"
-                    >
-                      <SendIcon className="w-3 h-3" />
-                      Send now
-                    </div>
-                    <div
-                      onClick={handleEdit}
-                      className="cursor-pointer flex items-center gap-1 px-3 py-1 font-medium rounded-md bg-black text-white hover:bg-zinc-800"
-                    >
-                      <PencilIcon className="w-3 h-3" />
-                      Edit
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ) : null}
-          </div>
-        )}
 
         {/* Typing indicators */}
         {view === "user" && agentTyping && <TypingIndicator sender="agent" />}

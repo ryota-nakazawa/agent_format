@@ -2,7 +2,6 @@ import { create } from "zustand";
 import { ChatMessage, Item } from "@/lib/assistant";
 import { ChatCompletionMessageParam } from "openai/resources/chat/completions";
 import { INITIAL_MESSAGE } from "@/config/constants";
-import { DEFAULT_ACTION } from "@/config/demoData";
 
 export interface Action {
   name: string;
@@ -52,7 +51,7 @@ const useConversationStore = create<ConversationState>((set) => ({
   ],
   conversationItems: [],
   annotations: [],
-  recommendedActions: [DEFAULT_ACTION],
+  recommendedActions: [],
   suggestedMessage: null,
   suggestedMessageDone: false,
   userTyping: false,

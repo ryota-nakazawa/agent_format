@@ -134,6 +134,9 @@ export const processMessages = async () => {
   let assistantMessageContent = "";
   let functionArguments = "";
 
+  setSuggestedMessage(null);
+  setSuggestedMessageDone(false);
+
   await handleTurn(allConversationItems, async ({ event, data }) => {
     switch (event) {
       case "response.output_text.delta":
@@ -159,18 +162,31 @@ export const processMessages = async () => {
             },
           ],
         } as ChatMessage;
+
         if (annotation) {
           message.content[0].annotations = [
             ...(message.content[0].annotations ?? []),
             annotation,
           ];
         }
-        setSuggestedMessage(message);
+
+        const existingMessage = chatMessages.find(
+          (item) => item.type === "message" && item.id === item_id
+        );
+
+        if (existingMessage && existingMessage.type === "message") {
+          existingMessage.content = message.content;
+        } else {
+          chatMessages.push(message);
+        }
+
+        setChatMessages([...chatMessages]);
         break;
       }
 
       case "response.output_text.done": {
         setSuggestedMessageDone(true);
+        setAgentTyping(false);
         break;
       }
 
@@ -335,6 +351,10 @@ export const processMessages = async () => {
         if (item.type === "file_search_call") {
           setFAQExtracts(item.results);
           setRelevantArticlesLoading(false);
+        }
+
+        if (item.type === "message") {
+          setAgentTyping(false);
         }
 
         setConversationItems([...conversationItems]);

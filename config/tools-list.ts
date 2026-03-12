@@ -177,15 +177,5 @@ export const toolsList = [
   // add more tools as needed
 ];
 
-// Tools that will need to be confirmed by the human representative before execution
-// Ex: "get_order" and "create_ticket" are low-risk so they can be automatically executed
-export const agentTools = [
-  "cancel_order",
-  "reset_password",
-  "send_replacement",
-  "create_refund",
-  "issue_voucher",
-  "create_return",
-  "create_complaint",
-  "update_info",
-];
+// This demo now defaults to direct AI resolution, so tools are auto-executed.
+export const agentTools: string[] = [];

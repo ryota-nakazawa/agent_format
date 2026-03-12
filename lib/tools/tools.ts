@@ -1,11 +1,20 @@
 import { toolsList } from "../../config/tools-list";
 import { VECTOR_STORE_ID } from "@/config/constants";
 
+const configuredVectorStoreId = String(VECTOR_STORE_ID).trim();
+const hasConfiguredVectorStore =
+  configuredVectorStoreId.length > 0 &&
+  configuredVectorStoreId !== "<vector_store_id>";
+
 export const tools = [
-  {
-    type: "file_search",
-    vector_store_ids: [VECTOR_STORE_ID],
-  },
+  ...(hasConfiguredVectorStore
+    ? [
+        {
+          type: "file_search" as const,
+          vector_store_ids: [configuredVectorStoreId],
+        },
+      ]
+    : []),
   // Mapping toolsList into the expected tool definition format
   ...toolsList.map((tool) => {
     const toolDef: {
